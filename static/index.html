@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 海龟汤</title>
+<meta name="description" content="让 AI 玩海龟汤，支持自定义题目、玩家模型和主持人模型。">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/styles.css">
+<script src="/static/app.js" defer></script>
+</head>
+<body>
+<header class="masthead">
+  <a href="/" class="brand"><span class="brand-mark">?</span><span>AI 海龟汤 <small>模型提问与判断</small></span></a>
+  <div class="header-actions"><span id="judge-chip" class="connection">主持人未就绪</span><button id="judge-config-button" class="outline">主持人配置</button><button id="history-button" class="quiet">对局记录</button><button id="config-button" class="outline">接入玩家 <span aria-hidden="true">↗</span></button></div>
+</header>
+<main class="workspace">
+<aside class="story panel">
+  <div class="section-label"><span>01 / 出题</span><button id="example-button" class="text-button">填入示例</button></div>
+  <label for="title" class="field-label">本局题目</label><input id="title" class="title-input" value="一杯没有喝的水" maxlength="80">
+  <label for="surface" class="field-label space-top">汤面 <span>玩家可见</span></label>
+  <textarea id="surface" rows="6" maxlength="2000">一个人向服务员要了一杯水。服务员突然对他大喊一声，他却道了谢，转身离开了。为什么？</textarea>
+  <details class="secret" id="secret-details"><summary><span>汤底</span><span class="private-label">仅裁判与观察员可见</span></summary>
+    <label for="bottom" class="sr-only">汤底</label><textarea id="bottom" rows="6" maxlength="3000">他正在打嗝，想喝水止嗝。服务员故意大喊一声来吓他，帮助止嗝。受到惊吓后，他的打嗝停止了，因此道谢离开，不再需要水。</textarea>
+    <p class="hint">只需要完整的汤底。主持人会直接对照故事，判断玩家是否还原了核心经过与原因。</p>
+  </details>
+  <div class="round-limit"><label for="max-rounds">最多轮数</label><input id="max-rounds" type="number" min="1" max="50" value="20"></div>
+  <p id="story-note" class="hint">开局后题目锁定。汤底不会发送给玩家 API。</p>
+  <div class="story-foot"><span class="small-mark">≋</span><p>一个问题。<br>离真相近一点。</p></div>
+</aside>
+<section class="arena panel" aria-label="模型对局">
+  <div class="arena-head"><div><div class="section-label">02 / 对局</div><h1 id="arena-title">等玩家开口</h1></div><span class="status-badge" id="game-status">未开始</span></div>
+  <div class="participants"><div><span class="avatar player-avatar">P</span><span><strong id="player-name">API 玩家</strong><small>只看汤面 · 负责提问</small></span></div><span class="versus">×</span><div><span class="avatar judge-avatar" id="judge-avatar">L</span><span><strong id="judge-name">Laya Multilingual</strong><small>知道汤底 · 负责判决</small></span></div></div>
+  <div id="feed" class="feed" role="log" aria-label="逐轮问答" aria-live="polite"></div>
+  <div id="phase" class="phase" role="status"><span class="phase-dot"></span><span id="phase-text">接入玩家模型，就可以开始这局海龟汤。</span></div>
+  <div id="game-error" class="error-box" role="alert" hidden></div>
+  <div class="controls"><button id="start-button" class="primary">开始对局 <span aria-hidden="true">▶</span></button><button id="pause-button" class="outline" disabled>暂停</button><button id="step-button" class="outline">下一轮</button><button id="new-button" class="quiet" disabled>新开一局</button></div>
+</section>
+<aside class="observer panel">
+  <div class="section-label">03 / 观察</div>
+  <div class="metric-head"><span>解题阶段</span><span id="progress-source">主持人判定</span></div>
+  <div class="stage-title" id="stage-title">等待提问</div>
+  <div class="stage-track" id="stage-track" aria-label="解题阶段"><span>探索</span><span>推理</span><span>还原</span></div>
+  <p class="hint" id="stage-note">根据累计肯定记录与汤底判断<br>完整还原故事即可通关</p>
+  <div class="stats"><div><span>当前轮数</span><strong id="round-count">00 <small>/ 20</small></strong></div><div><span>累计调用耗时</span><strong id="total-time">—</strong></div><div><span>最近裁判耗时</span><strong id="judge-time">—</strong></div></div>
+  <details id="progress-details" class="progress-details"><summary>查看阶段判定 <span class="private-label">观察员</span></summary><div id="stage-probabilities" class="probabilities"></div><p class="hint">模型对解题阶段的估计，可能有误。累计肯定记录覆盖汤底的核心经过与原因，且本轮得到肯定判决时通关。</p></details>
+  <div class="legend"><p>裁判的三个回答</p><div><span class="verdict yes">是</span><span>事实支持</span></div><div><span class="verdict no">不是</span><span>事实否定</span></div><div><span class="verdict irrelevant">无关</span><span>不影响谜底的细节</span></div></div>
+  <button id="export-button" class="outline full" disabled>导出这局记录 <span aria-hidden="true">↓</span></button>
+</aside>
+</main>
+<footer class="page-footer"><span id="privacy-note">汤底只交给主持人，玩家通过提问寻找真相。</span><span id="device-label">Laya Multilingual · 本地推理</span></footer>
+<dialog id="config-dialog"><form id="config-form">
+  <div class="dialog-head"><div><span class="section-label">模型连接</span><h2>让玩家入座</h2></div><button type="button" class="close-button" data-close="config-dialog" aria-label="关闭配置">×</button></div>
+  <p class="dialog-intro">接入兼容 Chat Completions 的 API。玩家每轮直接用文字问一个问题。</p>
+  <label for="base-url">API 地址</label><input id="base-url" type="url" required value="https://api.openai.com/v1" placeholder="https://你的服务地址/v1">
+  <label for="model-name">模型名称</label><input id="model-name" required placeholder="服务提供商给出的模型 ID" autocomplete="off">
+  <label for="api-key">API Key <span class="hint">无鉴权的本地服务可留空</span></label><input id="api-key" type="password" autocomplete="off" placeholder="仅在本机服务内存中保存">
+  <p class="hint" id="key-hint">密钥不写入磁盘、对局记录或浏览器存储。修改配置时请重新填写。</p>
+  <div class="dialog-actions"><button type="submit" class="primary" id="save-config">保存配置</button><button type="button" id="test-api" class="outline">测试玩家连接</button></div>
+  <p id="config-result" class="form-result" role="status"></p>
+
+</form></dialog>
+<dialog id="judge-dialog"><form id="judge-form">
+  <div class="dialog-head"><div><span class="section-label">主持人连接</span><h2>选择这局的主持人</h2></div><button type="button" class="close-button" data-close="judge-dialog" aria-label="关闭主持人配置">×</button></div>
+  <p class="dialog-intro">主持人负责回答“是 / 不是 / 无关”，并判断是否已经还原汤底。</p>
+  <label for="judge-provider">主持人类型</label>
+  <select id="judge-provider"><option value="laya">Laya Multilingual · 本地模型</option><option value="jev">Jev · API</option></select>
+  <div id="laya-settings"><p class="hint">使用本机已下载的 Laya 权重。仅使用 Jev 时不需要安装或下载 Laya。</p></div>
+  <div id="jev-settings" hidden>
+    <label for="judge-base-url">主持人 API 地址</label><input id="judge-base-url" type="url" value="https://api.typesafe.ai/v1/systemone">
+    <label for="judge-model">主持人模型名称</label><input id="judge-model" value="jev-latest" autocomplete="off">
+    <label for="judge-key">主持人 API Key</label><input id="judge-key" type="password" autocomplete="off" placeholder="仅在本机服务内存中保存">
+    <p class="hint" id="judge-key-hint">密钥仅保存在服务内存，重启后需要重新填写。</p>
+    <p class="data-note">汤底和用于判决的问答会发送到此主持人 API。测试连接和每轮判断会产生 API 请求。</p>
+  </div>
+  <p id="judge-detail" class="hint">尚未加载本地主持人。</p>
+  <div class="dialog-actions"><button type="submit" id="save-judge" class="primary">保存主持人</button><button type="button" id="load-judge" class="outline">加载本地主持人</button></div>
+  <p id="judge-result" class="form-result" role="status"></p>
+</form></dialog>
+<dialog id="history-dialog"><div class="dialog-head"><div><span class="section-label">本机保存</span><h2>对局记录</h2></div><button class="close-button" data-close="history-dialog" aria-label="关闭记录">×</button></div><div id="history-list"></div></dialog>
+<dialog id="new-dialog"><div class="dialog-head"><h2>准备下一碗汤？</h2></div><p>这局会保留在“对局记录”中。你可以沿用题目，也可以修改汤面和汤底。</p><div class="dialog-actions"><button id="confirm-new" class="primary">保存并新开一局</button><button class="outline" data-close="new-dialog">继续这局</button></div></dialog>
+<div id="toast" class="toast" role="status" hidden></div>
+</body></html>

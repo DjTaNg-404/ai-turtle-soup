@@ -1,0 +1,27 @@
+[project]
+name = "ai-turtle-soup"
+version = "0.1.0"
+description = "Local turtle soup game with API players and selectable Laya or Jev hosts"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE", "app/vendor/LICENSE.laya", "app/vendor/NOTICE.md"]
+keywords = ["laya", "jev", "llm", "lateral-thinking", "turtle-soup", "game"]
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115,<1", "uvicorn>=0.30,<1", "httpx>=0.28,<1", "pydantic>=2,<3"
+]
+[project.urls]
+Repository = "https://github.com/DjTaNg-404/ai-turtle-soup"
+Issues = "https://github.com/DjTaNg-404/ai-turtle-soup/issues"
+Changelog = "https://github.com/DjTaNg-404/ai-turtle-soup/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+laya = [
+  "torch>=2.8,<3", "transformers>=5,<6", "safetensors>=0.6,<1", "numpy>=2,<3",
+  "huggingface-hub>=1,<2"
+]
+[dependency-groups]
+dev = ["pytest>=8,<10"]
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

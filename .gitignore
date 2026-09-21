@@ -1,0 +1,30 @@
+.venv/
+.cache/
+.data/
+__pycache__/
+.pytest_cache/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+
+# Model assets, runtime exports and credentials belong to the local installation.
+models/
+exports/
+*.safetensors
+*.pt
+*.pth
+*.onnx
+*.pem
+*.key
+
+# Build, test and editor artifacts.
+dist/
+build/
+*.egg-info/
+.ruff_cache/
+.coverage*
+htmlcov/
+.idea/
+.vscode/

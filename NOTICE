@@ -1,0 +1,9 @@
+AI Turtle Soup (AI 海龟汤)
+Copyright 2026 AI Turtle Soup contributors
+
+This project includes code from Laya by Convai Innovations / NandhaKishorM,
+licensed under the Apache License, Version 2.0.
+See app/vendor/NOTICE.md and app/vendor/LICENSE.laya for provenance and terms.
+
+Laya model weights are downloaded separately and are not included in this
+source distribution. This project is an independent integration.

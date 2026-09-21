@@ -1,0 +1,40 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      HF_HUB_OFFLINE: "1"
+      USE_TF: "0"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.3"
+          python-version: "3.12"
+          enable-cache: true
+      - name: Install locked dependencies
+        run: uv sync --locked --dev
+      - name: Check exported pip dependencies
+        run: |
+          uv export --locked --format requirements-txt --all-groups --no-hashes --no-header --no-emit-project --output-file /tmp/requirements.lock.txt
+          diff requirements.lock.txt /tmp/requirements.lock.txt
+          uv export --locked --format requirements-txt --all-groups --all-extras --no-hashes --no-header --no-emit-project --output-file /tmp/requirements-laya.lock.txt
+          diff requirements-laya.lock.txt /tmp/requirements-laya.lock.txt
+      - name: Check Python syntax
+        run: uv run --locked python -m compileall -q app scripts tests run.py
+      - name: Check JavaScript syntax
+        run: node --check static/app.js
+      - name: Verify that Laya dependencies are optional
+        run: uv run --locked python -c "import importlib.util; assert importlib.util.find_spec('torch') is None"
+      - name: Run tests without model weights or API credentials
+        run: uv run --locked pytest -q
