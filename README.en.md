@@ -23,7 +23,7 @@ uv run --locked python run.py
 
 For a downloaded source ZIP, extract it and run the two `uv` commands from the extracted project directory.
 
-Open **http://127.0.0.1:8765/**. Enter a puzzle and its solution, configure a Chat Completions API URL, model ID and API key, test the connection, then open the host settings and configure Jev with its own API key. Start or advance one turn once both roles are configured.
+Open [http://127.0.0.1:8765/](http://127.0.0.1:8765/). Enter a puzzle and its solution, configure a Chat Completions API URL, model ID and API key, test the connection, then open the host settings and configure Jev with its own API key. Start or advance one turn once both roles are configured.
 
 The base installation runs the Jev path without PyTorch, Transformers or model weights. Jev receives the hidden solution and makes two sequential API requests per turn when affirmative evidence exists (otherwise only the current question is judged). Player and host credentials are configured separately.
 
